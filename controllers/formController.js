@@ -7,7 +7,11 @@ const createForm = async (req, res) => {
   try {
     const { title, description, questions, headerImage } = req.body;
 
-    // Ensure each question has a type and image (optional)
+    // Ensure that 'questions' is an array and that each question has a valid type
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({ message: 'Questions must be an array' });
+    }
+
     const formattedQuestions = questions.map(question => {
       if (!question.type || !['Text', 'Grid', 'CheckBox'].includes(question.type)) {
         return res.status(400).json({ message: 'Invalid question type' });
@@ -47,16 +51,15 @@ const getForms = async (req, res) => {
 // Search forms by title or description
 const searchForms = async (req, res) => {
   try {
-    const { query } = req.query;  // query parameter to search by title or description
+    const { query } = req.query;
 
     if (!query) {
       return res.status(400).json({ message: 'Search query is required' });
     }
 
-    // Search forms in title or description (case-insensitive)
     const forms = await Form.find({
       $or: [
-        { title: { $regex: query, $options: 'i' } },  // i = case-insensitive
+        { title: { $regex: query, $options: 'i' } },
         { description: { $regex: query, $options: 'i' } },
       ],
     });
@@ -76,6 +79,12 @@ const searchForms = async (req, res) => {
 const getFormById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Validate ObjectId format before querying MongoDB
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
+
     const form = await Form.findById(id);
 
     if (!form) {
@@ -89,10 +98,20 @@ const getFormById = async (req, res) => {
   }
 };
 
+// Validate ObjectId
+const isValidObjectId = (id) => {
+  const mongoose = require('mongoose');
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
 // Delete a form by ID
 const deleteForm = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
 
     const deletedForm = await Form.findByIdAndDelete(id);
 
@@ -114,6 +133,10 @@ const deleteForm = async (req, res) => {
 const duplicateForm = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
 
     const form = await Form.findById(id);
 
@@ -141,17 +164,19 @@ const getShareableUrl = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
+
     const form = await Form.findById(id);
 
     if (!form) {
       return res.status(404).json({ message: 'Form not found' });
     }
 
-    // Generate a unique token or slug for the form shareable URL
-    const shareableToken = crypto.randomBytes(16).toString('hex'); // Example unique token
+    const shareableToken = crypto.randomBytes(16).toString('hex');
     const shareableUrl = `${process.env.FRONTEND_URL}/form/${shareableToken}`;
 
-    // Optionally, you could store the token in the database with the form for future reference
     res.status(200).json({ shareableUrl });
   } catch (error) {
     console.error('Error generating shareable URL:', error.message);
@@ -163,6 +188,10 @@ const getShareableUrl = async (req, res) => {
 const submitResponse = async (req, res) => {
   try {
     const { formId, responses } = req.body;
+
+    if (!isValidObjectId(formId)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
 
     const newResponse = new Response({
       formId,
@@ -182,6 +211,10 @@ const getResponsesByFormId = async (req, res) => {
   try {
     const { formId } = req.params;
 
+    if (!isValidObjectId(formId)) {
+      return res.status(400).json({ message: 'Invalid form ID' });
+    }
+
     const responses = await Response.find({ formId });
     res.status(200).json(responses);
   } catch (error) {
@@ -193,7 +226,7 @@ const getResponsesByFormId = async (req, res) => {
 module.exports = {
   createForm,
   getForms,
-  searchForms,          // New search endpoint
+  searchForms,
   getFormById,
   deleteForm,
   duplicateForm,
