@@ -23,4 +23,10 @@ router.post('/:id/duplicate', formController.duplicateForm);
 // Route for generating a shareable URL for a form
 router.get('/:id/shareable-url', formController.getShareableUrl);
 
+// Route for submitting a response to a form
+router.post('/submit-response', formController.submitResponse);
+
+// Route for getting all responses for a specific form
+router.get('/:formId/responses', formController.getResponsesByFormId);
+
 module.exports = router;
