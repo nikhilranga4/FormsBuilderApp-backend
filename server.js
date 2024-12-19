@@ -18,8 +18,11 @@ app.use(cors()); // Enable Cross-Origin Request sharing (if necessary)
 // Use routes defined in /routes/index.js (forms and responses)
 app.use('/api', routes); // Prefix all routes with /api
 
-// MongoDB connection (removing deprecated options)
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/formApp')
+// MongoDB connection (using the MongoDB URI from environment variables)
+mongoose.connect(process.env.MONGODB_URI, { 
+  useNewUrlParser: true,
+  useUnifiedTopology: true 
+})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('Error connecting to MongoDB:', err));
 
